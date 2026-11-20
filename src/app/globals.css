@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+:root {
+  --background: #070a13;
+
+  --joy: #fff570;
+  --trust: #8ce863;
+  --fear: #428e2b;
+  --surprise: #6cb8f6;
+  --sadness: #4462f2;
+  --disgust: #e66cf5;
+  --anger: #ea3829;
+  --anticipation: #f2a560;
+}
+
+body {
+  background: var(--background);
+}
