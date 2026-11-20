@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useSyncExternalStore, type RefObject } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { TrackballControls } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -10,6 +10,8 @@ import { color, type Swatch } from "@/lib/emotion_color";
 
 
 /** Config */
+const FIT = 1.1;     // Screen fit
+
 const LEVELS = 7;    // Intensities
 const SPIN = 0.3;    // rad/s
 const CAM_DX = 3.1;  // Camera distance px
@@ -20,6 +22,7 @@ const DROP = 12;     // Label dropoff px
 
 const STEP = 50;     // Scroll/level px
 const GAP = 100;     // Scroll pause ms
+const PINCH = 40;    // Mobile zoom px
 
 
 /** Marker normal, spin axis, and scratch vectors. */
@@ -60,6 +63,27 @@ interface Props {
 
 /** Browser detection. */
 const idle = () => () => {};
+
+
+/** Mobile pinch helper. */
+const span = (touches: React.TouchList) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+
+
+/** Zooms out on mobile screens. */
+function Fit() {
+  const { camera, size } = useThree();
+
+  useFrame(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    const zoom = Math.min(1, FIT * size.width / size.height);
+
+    if (cam.zoom === zoom) return;
+    cam.zoom = zoom;
+    cam.updateProjectionMatrix();
+  });
+
+  return null;
+}
 
 
 /** Sphere painted with the palette of the current level. */
@@ -222,6 +246,7 @@ function View({ lock, spin }: { lock?: Spot; spin: boolean }) {
 /** Globe of emotions... hence the name... */
 export default function EmotionGlobe({ emotions, palette, i = 3, lock, spin = false }: Props) {
   const [free, setFree] = useState(i);
+  const pinch = useRef({ value: i, dist: 0 });
   const scroll = useRef({ value: i, time: 0 });
   const labels = useRef(new Map<number, HTMLDivElement>());
   const browser = useSyncExternalStore(idle, () => true, () => false);
@@ -243,8 +268,22 @@ export default function EmotionGlobe({ emotions, palette, i = 3, lock, spin = fa
         state.time = event.timeStamp;
         setFree(Math.round(state.value));
       }}
+      onTouchStart={(event) => {
+        if (event.touches.length !== 2) return;
+        pinch.current = { value: free, dist: span(event.touches) };
+      }}
+      onTouchMove={(event) => {
+        if (lock || event.touches.length !== 2) return;
+        const state = pinch.current;
+        const dist = span(event.touches);
+
+        state.value = Math.min(LEVELS - 1, Math.max(0, state.value + (dist - state.dist) / PINCH));
+        state.dist = dist;
+        setFree(Math.round(state.value));
+      }}
     >
-      <Canvas flat camera={{ position: [0, 0, CAM_DX], fov: 45 }}>
+      <Canvas flat dpr={[1, 2]} camera={{ position: [0, 0, CAM_DX], fov: 45 }}>
+        <Fit />
         <View lock={lock} spin={spin} />
         <Surface palette={palette} level={level} />
         <Markers emotions={shown} labels={labels} />

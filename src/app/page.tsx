@@ -23,8 +23,8 @@ export default function Home() {
     <main className="relative h-dvh">
       <EmotionGlobe emotions={EMOTIONS} palette={PALETTE} i={0} lock={lock} spin={spin} />
 
-      <div className="absolute left-4 top-4 flex w-120 flex-row gap-3 text-sm text-slate-200">
-        <div>
+      <div className="absolute left-4 top-4 flex w-[calc(100%-2rem)] max-w-120 flex-row gap-3 text-sm text-slate-200">
+        <div className="min-w-0 flex-1">
           <input
             type="text"
             value={query}
