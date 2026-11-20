@@ -12,7 +12,7 @@ const PALETTE = () => EMOTIONS.map(swatch);
 
 
 export default function Home() {
-  const [spin, setSpin] = useState(true);
+  const [spin, setSpin] = useState(false);
   const [query, setQuery] = useState("");
 
   const name = query.trim().toLowerCase();
@@ -21,7 +21,7 @@ export default function Home() {
 
   return (
     <main className="relative h-dvh">
-      <EmotionGlobe emotions={EMOTIONS} palette={PALETTE} i={3} lock={lock} spin={spin} />
+      <EmotionGlobe emotions={EMOTIONS} palette={PALETTE} i={0} lock={lock} spin={spin} />
 
       <div className="absolute left-4 top-4 flex w-120 flex-row gap-3 text-sm text-slate-200">
         <div>
