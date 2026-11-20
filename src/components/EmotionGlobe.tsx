@@ -257,7 +257,7 @@ export default function EmotionGlobe({ emotions, palette, i = 3, lock, spin = fa
 
   return (
     <div
-      className="relative isolate h-full w-full select-none"
+      className="relative isolate h-full w-full touch-none select-none"
       onWheel={(event) => {
         if (lock || event.buttons) return;
         const state = scroll.current;

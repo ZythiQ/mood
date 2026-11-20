@@ -23,7 +23,7 @@ export default function Home() {
     <main className="relative h-dvh">
       <EmotionGlobe emotions={EMOTIONS} palette={PALETTE} i={0} lock={lock} spin={spin} />
 
-      <div className="absolute left-4 top-4 flex w-[calc(100%-2rem)] max-w-120 flex-row gap-3 text-sm text-slate-200">
+      <div className="absolute left-4 top-4 flex w-[calc(100%-2rem)] max-w-80 flex-row items-start gap-3 text-sm text-slate-200">
         <div className="min-w-0 flex-1">
           <input
             type="text"
@@ -37,7 +37,7 @@ export default function Home() {
               event.preventDefault();
               setQuery(options[0].name);
             }}
-            className="w-full rounded border border-slate-700 bg-slate-950/80 px-2 py-1 outline-none focus:border-slate-500"
+            className="w-full rounded border border-slate-700 bg-slate-950/80 px-2 py-1 text-base outline-none focus:border-slate-500 md:text-sm"
           />
 
           {options.map((emotion) => (
@@ -50,7 +50,7 @@ export default function Home() {
             </button>
           ))}
         </div>
-        <label className="flex cursor-pointer items-center gap-2">
+        <label className="flex h-7 cursor-pointer items-center gap-2">
           <input
             type="checkbox"
             className="peer sr-only"
