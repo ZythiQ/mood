@@ -7,23 +7,25 @@ import { Emotion } from "@/lib/emotion";
 import { swatch } from "@/lib/emotion_color";
 
 
-const EMOTIONS = Emotion.all();
-const PALETTE = () => EMOTIONS.map(swatch);
+const ALL = Emotion.all();
+const EMOTIONS = Array.from({ length: Math.max(...ALL.map((e) => e.u)) + 1 }, (_, u) => ALL.filter((e) => e.u === u));
+const PALETTE = () => EMOTIONS.map((layer) => layer.map(swatch));
 
 
 export default function Home() {
   const [spin, setSpin] = useState(false);
+  const [label, setLabel] = useState(true);
   const [query, setQuery] = useState("");
 
   const name = query.trim().toLowerCase();
-  const lock = EMOTIONS.find((emotion) => emotion.name === name);
-  const options = name && !lock ? EMOTIONS.filter((emotion) => emotion.name.startsWith(name)).slice(0, 6) : [];
+  const lock = ALL.find((emotion) => emotion.name === name);
+  const options = name && !lock ? ALL.filter((emotion) => emotion.name.startsWith(name)).slice(0, 6) : [];
 
   return (
     <main className="relative h-dvh">
-      <EmotionGlobe emotions={EMOTIONS} palette={PALETTE} i={0} lock={lock} spin={spin} />
+      <EmotionGlobe emotions={EMOTIONS} palette={PALETTE} u={0} lock={lock} spin={spin} label={label} />
 
-      <div className="absolute left-4 top-4 flex w-[calc(100%-2rem)] max-w-80 flex-row items-start gap-3 text-sm text-slate-200">
+      <div className="absolute left-4 top-4 flex w-[calc(100%-2rem)] max-w-96 flex-row items-start gap-3 text-sm text-slate-200">
         <div className="min-w-0 flex-1">
           <input
             type="text"
@@ -59,6 +61,16 @@ export default function Home() {
           />
           <span className="relative h-5 w-9 rounded-full bg-slate-700 transition-colors peer-checked:bg-slate-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
           Spin
+        </label>
+        <label className="flex h-7 cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            className="peer sr-only"
+            checked={label}
+            onChange={(event) => setLabel(event.target.checked)}
+          />
+          <span className="relative h-5 w-9 rounded-full bg-slate-700 transition-colors peer-checked:bg-slate-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
+          Labels
         </label>
       </div>
     </main>

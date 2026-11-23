@@ -1,6 +1,6 @@
 import { Color, SRGBColorSpace } from "three";
 
-import { Emotion } from "./emotion";
+import { Emotion, type Row } from "./emotion";
 
 
 /** Hue, saturation, and lightness (all 0 to 1). */
@@ -12,13 +12,9 @@ interface HSL {
 
 
 /** Globe-positioned colour. */
-export interface Swatch {
-  x: number;
-  y: number;
-  z: number;
-  i: number;
+export type Swatch = Row["globe"] & {
   color: string;
-}
+};
 
 
 /** Computed colours by emotion. */
@@ -34,11 +30,11 @@ function hsl(emotion: Emotion): HSL {
     return { h: (a.h + b.h) / 2 + wrap, s: Math.max(a.s, b.s), l: (a.l + b.l) / 2 };
   }
 
-  const name = `--${emotion.lo.lo.hi.name}`;
-  const css = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const mid = emotion.lo.lo.hi;
+  const css = getComputedStyle(document.documentElement).getPropertyValue(`--${mid.name}`).trim();
   
   const { h, s, l } = new Color(css).getHSL({ h: 0, s: 0, l: 0 }, SRGBColorSpace);
-  const t = (emotion.i - 3) / 3;
+  const t = (emotion.i - mid.i) / mid.i;
   
   return { h, s: s + 0.2 * t, l: l - 0.12 * t };
 }
@@ -59,5 +55,5 @@ export function color(emotion: Emotion): string {
 
 /** Returns the swatch of an emotion. */
 export function swatch(emotion: Emotion): Swatch {
-  return { x: emotion.x, y: emotion.y, z: emotion.z, i: emotion.i, color: color(emotion) };
+  return { x: emotion.x, y: emotion.y, z: emotion.z, color: color(emotion) };
 }

@@ -2,7 +2,7 @@ import raw from "@/data/emotion.json";
 
 
 /** Emotion row structure. */
-interface Row {
+export interface Row {
   name: string;
   parents: null | number[];
   intensities: number[];
@@ -11,12 +11,13 @@ interface Row {
     v: number;
     a: number;
     d: number;
-    i: number
+    i: number;
+    u: number;
   };
   globe: {
     x: number;
     y: number;
-    z: number
+    z: number;
   };
 }
 
@@ -33,6 +34,7 @@ export class Emotion {
   readonly a: number;
   readonly d: number;
   readonly i: number;
+  readonly u: number;
 
   readonly x: number;
   readonly y: number;
@@ -56,6 +58,7 @@ export class Emotion {
     this.a = row.pos.a;
     this.d = row.pos.d;
     this.i = row.pos.i;
+    this.u = row.pos.u;
 
     this.x = row.globe.x;
     this.y = row.globe.y;

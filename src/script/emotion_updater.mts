@@ -1,10 +1,12 @@
 import fs from "node:fs";
 
+import type { Row } from "@/lib/emotion";
+
 
 /** Config */
 const FILE = "src/data/emotion.json";
-const TILT = 0.15;
 const SQRT = 0.70710678;
+const TILT = 0.15;
 const MIDL = {
   v: 0.35355339,
   a: 0.35355339,
@@ -13,13 +15,7 @@ const MIDL = {
 
 
 /** Emotion position with its ID. */
-interface Pos {
-  id: number;
-  v: number;
-  a: number;
-  d: number;
-  i: number;
-}
+type Pos = Row["pos"] & { id: number };
 
 
 /** Radius of the first family seen. */

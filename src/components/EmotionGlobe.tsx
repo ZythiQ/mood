@@ -12,7 +12,6 @@ import { color, type Swatch } from "@/lib/emotion_color";
 /** Config */
 const FIT = 1.1;     // Screen fit
 
-const LEVELS = 7;    // Intensities
 const SPIN = 0.3;    // rad/s
 const CAM_DX = 3.1;  // Camera distance px
 
@@ -42,22 +41,14 @@ THREE.setConsoleFunction((type, message, ...params) => {
 type Labels = RefObject<Map<number, HTMLDivElement>>;
 
 
-/** Globe spot at an intensity level. */
-interface Spot {
-  x: number;
-  y: number;
-  z: number;
-  i: number;
-}
-
-
 /** EmotionGlobe properties. */
 interface Props {
-  emotions: Emotion[];
-  palette: () => Swatch[];
-  i?: number;
-  lock?: Spot;
+  emotions: Emotion[][];
+  palette: () => Swatch[][];
+  u?: number;
+  lock?: Emotion;
   spin?: boolean;
+  label?: boolean;
 }
 
 
@@ -87,17 +78,16 @@ function Fit() {
 
 
 /** Sphere painted with the palette of the current level. */
-function Surface({ palette, level }: { palette: () => Swatch[]; level: number }) {
+function Surface({ palette, level }: { palette: () => Swatch[][]; level: number }) {
   const painted = useRef(-1);
 
   const { geometry, shades } = useMemo(() => {
     const geometry = new THREE.SphereGeometry(1, 128, 64);
     const spots = geometry.attributes.position;
-    const nodes = palette().map((s) => ({ ...s, rgb: new THREE.Color(s.color) }));
 
-    const shades = Array.from({ length: LEVELS }, (_, i) => {
+    const shades = palette().map((group) => {
       const shade = new Float32Array(spots.count * 3);
-      const layer = nodes.filter((node) => node.i === i);
+      const layer = group.map((s) => ({ ...s, rgb: new THREE.Color(s.color) }));
 
       for (let k = 0; k < spots.count; k++) {
         let [r, g, b, sum] = [0, 0, 0, 0];
@@ -225,7 +215,7 @@ function Label({ emotion, labels }: { emotion: Emotion; labels: Labels }) {
 
 
 /** Camera controls. */
-function View({ lock, spin }: { lock?: Spot; spin: boolean }) {
+function View({ lock, spin }: { lock?: Emotion; spin: boolean }) {
   useFrame(({ camera }, delta) => {
     if (lock) {
       camera.position.set(lock.x, lock.y, lock.z).setLength(CAM_DX);
@@ -244,16 +234,16 @@ function View({ lock, spin }: { lock?: Spot; spin: boolean }) {
 
 
 /** Globe of emotions... hence the name... */
-export default function EmotionGlobe({ emotions, palette, i = 3, lock, spin = false }: Props) {
-  const [free, setFree] = useState(i);
-  const pinch = useRef({ value: i, dist: 0 });
-  const scroll = useRef({ value: i, time: 0 });
+export default function EmotionGlobe({ emotions, palette, u = 0, lock, spin = false, label = true }: Props) {
+  const [free, setFree] = useState(u);
+  const pinch = useRef({ value: u, dist: 0 });
+  const scroll = useRef({ value: u, time: 0 });
   const labels = useRef(new Map<number, HTMLDivElement>());
   const browser = useSyncExternalStore(idle, () => true, () => false);
 
-  if (lock && lock.i !== free) setFree(lock.i);
-  const level = lock ? lock.i : free;
-  const shown = useMemo(() => emotions.filter((emotion) => emotion.i === level), [emotions, level]);
+  if (lock && lock.u !== free) setFree(lock.u);
+  const level = lock ? lock.u : free;
+  const shown = label ? (emotions[level] ?? []) : [];
 
   return (
     <div
@@ -261,10 +251,11 @@ export default function EmotionGlobe({ emotions, palette, i = 3, lock, spin = fa
       onWheel={(event) => {
         if (lock || event.buttons) return;
         const state = scroll.current;
-        const delta = event.deltaY * (event.deltaMode ? 40 : 1);
+        const delta = event.deltaY * (event.deltaMode ? STEP : 1);
+        const step = Math.sign(delta) * Math.min(1, Math.abs(delta) / STEP);
 
         if (event.timeStamp - state.time > GAP) state.value = free;
-        state.value = Math.min(LEVELS - 1, Math.max(0, state.value - delta / STEP));
+        state.value = Math.min(emotions.length - 1, Math.max(0, state.value - step));
         state.time = event.timeStamp;
         setFree(Math.round(state.value));
       }}
@@ -277,7 +268,7 @@ export default function EmotionGlobe({ emotions, palette, i = 3, lock, spin = fa
         const state = pinch.current;
         const dist = span(event.touches);
 
-        state.value = Math.min(LEVELS - 1, Math.max(0, state.value + (dist - state.dist) / PINCH));
+        state.value = Math.min(emotions.length - 1, Math.max(0, state.value + (dist - state.dist) / PINCH));
         state.dist = dist;
         setFree(Math.round(state.value));
       }}
