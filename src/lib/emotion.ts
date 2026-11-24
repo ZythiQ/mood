@@ -1,6 +1,15 @@
 import raw from "@/data/emotion.json";
 
 
+/** Config */
+const TILT = 0.15;
+const MIDL = {
+  v: 0.35355339,
+  a: 0.35355339,
+  d: 0.50000000
+};
+
+
 /** Emotion row structure. */
 export interface Row {
   name: string;
@@ -69,6 +78,19 @@ export class Emotion {
     this.intensities = row.intensities;
   }
 
+  /** Returns the globe coordinates for a 4D position. */
+  private static globe(v: number, a: number, d: number, top: Emotion): Row["globe"] {
+    if (Math.hypot(top.v - v, top.a - a, top.d - d) < 1e-6) {
+      return { x: top.x, y: top.y, z: top.z };
+    }
+
+    let [x, y, z] = [v - MIDL.v, a - MIDL.a, d - MIDL.d];
+    if (x === 0 && y === 0) [y, z] = [y - TILT * z, z + TILT * y];
+
+    const n = Math.hypot(x, y, z) || 1;
+    return { x: x / n, y: y / n, z: z / n };
+  }
+
   /** Returns every Emotion. */
   static all(): Emotion[] {
     return [...Emotion.table.values()];
@@ -107,7 +129,15 @@ export class Emotion {
     }
 
     while (Math.abs(top.hi.i - i) < Math.abs(top.i - i)) top = top.hi;
-    return top;
+
+    return new Emotion(top.id, {
+      name: top.name,
+      parents: top.parents ? [...top.parents] : null,
+      intensities: [...top.intensities],
+      reactions: [...top.reactions],
+      pos: { v, a, d, i, u: top.u },
+      globe: Emotion.globe(v, a, d, top)
+    });
   }
 
   /** Returns the composite of two emotions given a ratio (a:b). */
@@ -130,7 +160,7 @@ export class Emotion {
 
   /** Returns distance in (v, a, d, !i). */
   delta(other: Emotion): number {
-    return Math.hypot(this.v - other.v, this.a - other.a, this.d - other.d);
+    return Math.hypot(this.v - other.v, this.a - other.a, this.d - other.d, this.i - other.i);
   }
 
   /** Returns the reaction from accept/expect deflections. */

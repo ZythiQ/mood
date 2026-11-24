@@ -43,20 +43,25 @@ export class Profile {
     this.set_saturation(options.saturation ?? 24);
   }
 
+  /** Returns the count of distinct positions. */
+  private unique(points: Emotion[]): number {
+    return points.filter((p, i) => points.findIndex((q) => q.delta(p) === 0) === i).length;
+  }
+
   /** Updates the kinds of a graph. */
   private update_graph(graph: GraphName): void {
     const points = this.graphs[graph];
     const near = points.map((p) => points.flatMap((q, j) => (q.delta(p) <= this.radius ? [j] : [])));
-    const core = near.map((n) => n.length >= this.density);
+    const core = near.map((n) => this.unique(n.map((j) => points[j])) >= this.density);
     
     this.kinds[graph] = near.map((n, i) => core[i] ? "core" : n.some((j) => core[j]) ? "border" : "outlier");
   }
 
-  /** Removes a random outlier, else border from a graph. */
+  /** Removes a random outlier, border, else core from a graph. */
   private sweep_graph(graph: GraphName): void {
     const kinds = this.kinds[graph];
     
-    for (const target of ["outlier", "border"] as const) {
+    for (const target of ["outlier", "border", "core"] as const) {
       const pool = kinds.flatMap((kind, i) => (kind === target ? [i] : []));
       if (pool.length === 0) continue;
 
@@ -79,12 +84,12 @@ export class Profile {
     const points = this.graphs[graph];
     const near = points.filter((p) => p.delta(incoming) <= this.radius);
 
-    if (near.length + 1 >= this.density) {
+    if (this.unique([...near, incoming]) >= this.density) {
       return "core";
     }
     for (const p of near) {
-      const count = points.filter((q) => q.delta(p) <= this.radius).length;
-      if (count + 1 >= this.density) {
+      const hood = points.filter((q) => q.delta(p) <= this.radius);
+      if (this.unique([...hood, incoming]) >= this.density) {
         return "border";
       }
     }
@@ -106,6 +111,21 @@ export class Profile {
   get_graph(graph: GraphName): { emotion: Emotion; kind: Kind }[] {
     const kinds = this.kinds[graph];
     return this.graphs[graph].map((emotion, i) => ({ emotion, kind: kinds[i] }));
+  }
+
+  /** Returns the neighbour radius. */
+  get_radius(): number {
+    return this.radius;
+  }
+
+  /** Returns the minimum core density. */
+  get_density(): number {
+    return this.density;
+  }
+
+  /** Returns the max emotion saturation. */
+  get_saturation(): number {
+    return this.saturation;
   }
 
   /** Sets the neighbour radius. */
