@@ -4,12 +4,12 @@ import { useState } from "react";
 
 import EmotionGlobe from "@/components/EmotionGlobe";
 import { Emotion } from "@/lib/emotion";
-import { swatch } from "@/lib/emotion_color";
+import { swatch } from "@/lib/color";
 
 
 const ALL = Emotion.all();
 const EMOTIONS = Array.from({ length: Math.max(...ALL.map((e) => e.u)) + 1 }, (_, u) => ALL.filter((e) => e.u === u));
-const PALETTE = () => EMOTIONS.map((layer) => layer.map(swatch));
+const PALETTE = () => EMOTIONS.map((layer) => layer.map((e) => swatch(e)));
 
 
 export default function Home() {

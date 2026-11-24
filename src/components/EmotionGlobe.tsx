@@ -6,15 +6,15 @@ import { TrackballControls } from "@react-three/drei";
 import * as THREE from "three";
 
 import { Emotion } from "@/lib/emotion";
-import { color, type Swatch } from "@/lib/emotion_color";
+import { emotion_color, type Swatch } from "@/lib/color";
 
 
 /** Config */
 const FIT = 1.1;     // Screen fit
-
-const SPIN = 0.3;    // rad/s
+const SPIN = 0.25;   // Spin rad/s
 const CAM_DX = 3.1;  // Camera distance px
 
+const BASE = 1;      // White base weight
 const SOFT = 0.05;   // Blend px
 const SHARP = 2.5;   // Blend px
 const DROP = 12;     // Label dropoff px
@@ -90,7 +90,7 @@ function Surface({ palette, level }: { palette: () => Swatch[][]; level: number 
       const layer = group.map((s) => ({ ...s, rgb: new THREE.Color(s.color) }));
 
       for (let k = 0; k < spots.count; k++) {
-        let [r, g, b, sum] = [0, 0, 0, 0];
+        let [r, g, b, sum] = [BASE, BASE, BASE, BASE];
         
         for (const node of layer) {
           const gap = (
@@ -107,11 +107,12 @@ function Surface({ palette, level }: { palette: () => Swatch[][]; level: number 
 
           sum += weight;
         }
-        shade.set([r / (sum || 1), g / (sum || 1), b / (sum || 1)], k * 3);
+        shade.set([r / sum, g / sum, b / sum], k * 3);
       }
       return shade;
     });
 
+    painted.current = -1;
     geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(spots.count * 3), 3));
     return { geometry, shades };
     
@@ -192,7 +193,7 @@ function Label({ emotion, labels }: { emotion: Emotion; labels: Labels }) {
       }}
       className="absolute left-0 top-0 rounded border border-slate-800/60 bg-slate-950/75 px-2 py-1 whitespace-nowrap text-[10px] font-medium capitalize opacity-0"
     >
-      <div className="text-center" style={{ color: color(emotion) }}>
+      <div className="text-center" style={{ color: emotion_color(emotion) }}>
         {emotion.name}
       </div>
 
@@ -202,7 +203,7 @@ function Label({ emotion, labels }: { emotion: Emotion; labels: Labels }) {
             <li key={id} className="flex items-center gap-1.5">
               <span
                 className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: color(Emotion.from_id(id)) }}
+                style={{ backgroundColor: emotion_color(Emotion.from_id(id)) }}
               />
               {Emotion.from_id(id).name}
             </li>
@@ -243,7 +244,7 @@ export default function EmotionGlobe({ emotions, palette, u = 0, lock, spin = fa
 
   if (lock && lock.u !== free) setFree(lock.u);
   const level = lock ? lock.u : free;
-  const shown = label ? (emotions[level] ?? []) : [];
+  const shown = useMemo(() => (label ? [...new Set(emotions[level])] : []), [emotions, level, label]);
 
   return (
     <div

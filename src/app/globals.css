@@ -11,6 +11,9 @@
   --disgust: #e66cf5;
   --anger: #ea3829;
   --anticipation: #f2a560;
+
+  --expect: #4ade80;
+  --accept: #60a5fa;
 }
 
 body {
